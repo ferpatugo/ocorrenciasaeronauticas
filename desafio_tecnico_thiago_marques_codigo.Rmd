@@ -1,0 +1,489 @@
+---
+title: "Ocorrências Aeronáuticas na Aviação Civil Brasileira - Códigos - Thiago Marques"
+author: "Thiago Marques"
+date: '2023-01-30'
+output: rmdformats::readthedown
+highlight: kate
+---
+
+```{r, setup, include=FALSE}
+knitr::opts_knit$set(root.dir = "C:\\Users\\teste\\Desktop\\area de trabalho\\A3DATA\\desafio_tecnico")
+```
+
+```{r echo=FALSE, fig.align="center"}
+knitr::include_graphics("C:\\Users\\teste\\Desktop\\area de trabalho\\A3DATA\\desafio_tecnico\\logo.png")
+```  
+
+# Instalando e carregando as bibliotecas
+
+```{r include=FALSE}
+vetor_pacotes = c(
+  "DescTools",
+  "dplyr",
+  "GGally",
+  "ggplot2",
+  "dplyr",
+  "readr",
+  "ggpubr",
+  "plotly",
+  "lubridate",
+  "ggQC"
+)
+
+#install.packages(vetor_pacotes)
+lapply(vetor_pacotes, require, character.only = TRUE)
+
+#Evitando notação científica
+options(scipen = 999)
+```
+
+# Importando os banco de dados
+
+- Já facilitaremos transformando em fatores as variáveis strings e também limpando/tratando os diferentes tipos de representação de informações faltantes (NA) que foram utilizados no banco.
+
+```{r}
+#Carregando o arquivo em formato CSV
+aeronave = read.csv("aeronave.csv",h=T,encoding = "UTF-8",na.strings = c("", "***", "****", "NULL"),stringsAsFactors = T)
+```
+
+```{r}
+#Carregando o arquivo em formato CSV
+ocorrencia = read.csv("ocorrencia.csv",h=T,encoding = "UTF-8",na.strings = c("", "***", "****", "NULL"),stringsAsFactors = T)
+```
+
+# Unindo as tabelas (Fazendo o Join)
+
+- Unindo a tabela aeronaves a tabela ocorrências para identificar as ocorrências de cada aeronave, por meio da chave primária "codigo_ocorrencia" que liga ambas unicamente.
+
+```{r}
+uniao_join = merge(x = ocorrencia, y = aeronave, by = "codigo_ocorrencia", all = T)
+```
+
+- Fazendo a mesma coisa usando o tidyverse
+
+```{r}
+uniao_join_tidyverse = full_join(ocorrencia,aeronave, by="codigo_ocorrencia")
+```
+
+- Agora com todas as informações em mãos sobre as aeronaves e respectivas ocorrências, podemos partir para a fase do data quality
+
+- Vamos excluir a tabela uniao_join_tidyverse para evitar redundâncias e otimizar o espaço na memória.
+
+# Excluindo a tabela uniao_join_tidyverse
+
+```{r}
+remove(uniao_join_tidyverse)
+```
+
+# Data Quality
+
+## Verificando as variáveis faltantes de forma visual
+```{r include=FALSE}
+PlotMiss(uniao_join,main="Valores faltantes no Banco", bg = SetAlpha(hecru, 0.01))
+```
+
+```{r echo=FALSE, fig.align="center"}
+knitr::include_graphics("C:\\Users\\teste\\Desktop\\area de trabalho\\A3DATA\\desafio_tecnico\\missing values.png")
+```  
+- Por meio desse gráfico, adotamos que o corte de menores que 50% de faltantes seriam as melhores variáveis a se trabalhar, então não vale à pena trabalharmos com as seguintes variáveis:
+
+- Observalções Faltantes:
+
+  - relatorio_publicado (51%) ;
+  - dia_publicacao (51%) ;
+  - origem_voo (54,3%) ;
+  - destino_voo (58,9%) ;
+  - aerodromo (60,2%) ;
+  - saida_pista (87,5%) ;
+  - quantidade_fatalidades (82,6%) ;
+
+## Vamos filtrar o banco então sem essas variáveis:
+
+```{r}
+uniao_join_filtrado = uniao_join %>% select(-c("relatorio_publicado",
+                         "dia_publicacao",
+                         "origem_voo",
+                         "destino_voo",
+                         "aerodromo",
+                         "saida_pista",
+                         "quantidade_fatalidades"
+                      )
+)
+```
+
+## Verificando se foi aplicado corretamente o filtro
+
+```{r}
+dim(uniao_join_filtrado)[2]
+```
+
+- Agora ficamos com 33 variáveis, em vez de 40 para analisarmos
+
+## Transformando variáveis
+
+- Nessa etapa vamos analisar se é necessário transformar strings em fatores, informações de data que possam ter sido interpretadas como string e assim vai..
+
+```{r}
+class(uniao_join_filtrado$dia_ocorrencia)
+```
+
+- Conforme vimos a variável dia_ocorrencia está como fator e não como data, logo iremos transformá-la usando o pacote lubridate, melhor pacote do R para se trabalhar com datas.
+
+```{r}
+uniao_join_filtrado$dia_ocorrencia_data = as_date(uniao_join_filtrado$dia_ocorrencia)
+```
+
+- Verificando se funcionou
+
+```{r}
+class(uniao_join_filtrado$dia_ocorrencia_data)
+```
+
+# Fazendo um resumo geral das 33 variáveis que restaram
+
+```{r}
+summary(uniao_join_filtrado)
+```
+
+
+
+# Visualização de dados
+
+## Quantidade de ocorrências por ano:
+
+```{r}
+#Tabela com as ocorrências por ano
+ocorrencias_ano <- as.data.frame(table(year(ocorrencia$dia_ocorrencia)))
+
+ggplot(data = ocorrencias_ano, aes(x = Var1,y = Freq)) +
+  geom_bar(aes(fill = Var1),stat = "identity", show.legend = F) +
+  xlab("Ano") + 
+  ylab("Quantidade de ocorrências") +
+  ggtitle("Quantidade de ocorrências de acidentes e incidentes aeronáticos - 2006 a 2015 
+
+Total: 2027 Ocorrências") + 
+  geom_text(aes(label = Freq), vjust=-0.2, color="black") +
+  scale_fill_brewer(palette="BrBG")
+
+```
+
+- A quantidade de acidentes e incidentes graves aparenta ter uma tendência crescente de 2006 a 2012 e decresce a partir de 2013 a 2015, tendo seu pico em 2012, chegando a 287 acidentes, o que correponde a 14,15 % do total de acidentes no período estudado.
+
+## Quantidade de aeronaves envolvidas em acidentes por ano:
+
+```{r}
+uniao_join_filtrado %>%
+  group_by(ano = as.factor(year(dia_ocorrencia_data))) %>%
+  summarise(total = sum(aeronaves_envolvidas)) %>% 
+  ggplot(aes(x = ano, y = total)) +
+  geom_bar(aes(fill = ano),stat = "identity", show.legend = F) +
+  xlab("Ano") + 
+  ylab("Quantidade de Aeronaves") +
+  ggtitle("Quantidade de aeronaves envolvidas nos acidentes - 2006 a 2015") + 
+  geom_text(aes(label = total), vjust=-0.2, color="black") +
+  scale_fill_brewer(palette="BrBG")
+
+```
+- Segue o mesmo padrão do número de ocorrências de acidentes, sendo seu pico também em  2012, com 290 casos, correspondendo a 13,94% do total de aeronaves acidentadas no período estudado.
+
+- OBS: A variável quantidade de vítimas tinhamos muitos dados faltantes (82,6%) e não será possível analisá-la;
+
+## Quais são os tipos de classificação de ocorrências mais comuns?
+
+- Vamos fazer um gráfico de pizza para visualizá-las, uma vez que há poucas categorias.
+
+```{r}
+df_pizza_tab=table(ocorrencia$classificacao)
+df_pizza =  data.frame(df_pizza_tab) 
+  
+
+colors <- c('rgb(0,204,204)', 'rgb(102,51,0)')
+
+grafico_pizza_iterativo = plot_ly(df_pizza, 
+                            labels = ~Var1, 
+                            values = ~Freq, 
+                            marker = list(colors = colors),
+                            type = 'pie') %>%
+                            layout(title = 'Classificação dos tipos de ocorrências mais comuns (%) ')
+
+grafico_pizza_iterativo 
+```
+
+## Quais são os níveis de dano na aeronave mais comuns?
+
+- Vamos fazer um gráfico de pizza para visualizá-las, uma vez que há poucas categorias.
+
+```{r}
+df_pizza_tab=table(uniao_join_filtrado$nivel_dano)
+df_pizza =  data.frame(df_pizza_tab) 
+  
+
+colors <- c('rgb(0,204,204)', 'rgb(102,51,0)')
+
+grafico_pizza_iterativo = plot_ly(df_pizza, 
+                            labels = ~Var1, 
+                            values = ~Freq, 
+                            marker = list(colors = colors),
+                            type = 'pie') %>%
+                            layout(title = 'Classificação dos tipos de nível de dano mais comuns (%) ')
+
+grafico_pizza_iterativo 
+```
+
+## Quais são os equipamentos são mais comuns?
+
+- Vamos fazer um gráfico de pizza para visualizá-las, uma vez que há poucas categorias.
+
+```{r}
+df_pizza_tab=table(uniao_join_filtrado$equipamento)
+df_pizza =  data.frame(df_pizza_tab) %>% top_n(3) 
+  
+
+colors <- c('rgb(0,204,204)', 'rgb(102,51,0)')
+
+grafico_pizza_iterativo = plot_ly(df_pizza, 
+                            labels = ~Var1, 
+                            values = ~Freq, 
+                            marker = list(colors = colors),
+                            type = 'pie') %>%
+                            layout(title = 'top 3 Classificação dos tipos de equipamento aéreo (%) ')
+
+grafico_pizza_iterativo 
+```
+
+## Quais são os Status de investigação são mais comuns?
+
+```{r}
+df_pizza_tab=table(uniao_join_filtrado$status_investigacao)
+df_pizza =  data.frame(df_pizza_tab) 
+  
+
+colors <- c('rgb(0,204,204)', 'rgb(102,51,0)')
+
+grafico_pizza_iterativo = plot_ly(df_pizza, 
+                            labels = ~Var1, 
+                            values = ~Freq, 
+                            marker = list(colors = colors),
+                            type = 'pie') %>%
+                            layout(title = 'Status de investigação (%) ')
+
+grafico_pizza_iterativo 
+```
+
+- Número de Ocorrências por UF
+
+```{r}
+#tabela da quantidade de ocorrências totais por UF
+dados_uf = uniao_join_filtrado %>% select(uf) %>%
+  group_by(uf) %>%
+  summarise(quantidade = n()) %>%
+  arrange(desc(quantidade)) %>%
+  head(10)
+
+dados_uf$uf_fator = factor(dados_uf$uf,
+                           levels = c("SP",
+                                      "RS",
+                                      "MT",
+                                      "PR",
+                                      "MG",
+                                      "GO",
+                                      "RJ",
+                                      "PA",
+                                      "BA",
+                                      "AM"
+                                      #"MT",
+                                      #"RO",
+                                      #"CE",
+                                      #"MS",
+                                      #"PB",
+                                      #"RN",
+                                      #"PI",
+                                      #"MA",
+                                      #"DF",
+                                      #"PA",
+                                      #"AL",
+                                      #"TO",
+                                      #"SE",
+                                      #"AC",
+                                      #"RR",
+                                      #"AM",
+                                      #"AP")
+                                      )
+)
+                                      
+grafico_barras_uf = ggplot(data=dados_uf, aes(x=uf_fator, y=quantidade, fill=uf_fator)) +
+  geom_bar(stat="identity", position=position_dodge(), colour="black") +
+  ggtitle("Top 10 Total de ocorrências por UF") + 
+  xlab("UF") + ylab("Total de ocorrências") +
+  theme(axis.text.x = element_text(angle = -90, vjust = 0.5, hjust=1)) 
+
+ggplotly(grafico_barras_uf)
+
+```
+
+## Ocorrências por tipo de problema
+
+```{r}
+tipooco <- ocorrencia%>%
+  group_by(tipo)%>%
+  count(tipo)
+
+#Ordenação
+tipooco$tipo <- factor(tipooco$tipo, 
+                                         levels = tipooco$tipo[order(tipooco$n, decreasing = F)])
+
+tipooco%>%
+  filter(n > 120)%>%
+  ggplot(aes(x = tipo, y = n)) + coord_flip() +
+  geom_bar(aes(fill = tipo),stat = "identity", show.legend = F) +
+  xlab("Tipos de ocorrência") + ylab("Quantidade de ocorrências") +
+  ggtitle("Ocorrências por tipo de problema") + 
+  geom_text(aes(label = n), vjust= 0.4, hjust = 0.6, color="black")+
+  theme(axis.text.y = element_text(size = 6))
+
+```
+
+```{r}
+tipooco <- ocorrencia%>%
+  group_by(tipo)%>%
+  count(tipo)
+
+#Ordenação
+tipooco$tipo_fator <- factor(tipooco$tipo, 
+                                         levels = tipooco$tipo[order(tipooco$n, decreasing = T)])
+
+#Gráfico de Pareto dos acidentes por tipo de pista
+ggplot2::ggplot(tipooco, aes(x = tipo_fator, y = n)) +
+  ggQC::stat_pareto(
+    point.color = "red",
+    point.size = 3,
+    line.color = "black",
+    bars.fill = c("blue", "orange")
+  ) +
+  theme(axis.text.x = element_text(
+    angle = 90,
+    hjust = 1,
+    vjust = 0.5
+  ))
+
+```
+# Gráfico de linhas - Peso máximo decolagem por ano
+
+```{r}
+grafico_linhas  =  
+  ggplot(uniao_join_filtrado, aes(x=dia_ocorrencia_data,y=peso_maximo_decolagem)) + 
+  geom_line(col="red") + 
+  #geom_hline(yintercept = c(6000,10000))+
+  xlab("Data") + 
+  ylab("Peso máximo na decolagem") + 
+  ggtitle("Peso máximo na decolagem por ano") + 
+  #geom_text(aes(label = peso_maximo_decolagem), vjust=-0.2, color="black") +
+  scale_fill_brewer(palette="BrBG")
+
+grafico_linhas               
+```
+
+# Gráfico de linhas - Peso máximo decolagem por ano com limites 2 sigma
+
+```{r}
+# Criando limites inferiores e superiores (3 Sigma)
+l1=mean(uniao_join_filtrado$peso_maximo_decolagem)-3*sd(uniao_join_filtrado$peso_maximo_decolagem)
+
+l2=mean(uniao_join_filtrado$peso_maximo_decolagem)+3*sd(uniao_join_filtrado$peso_maximo_decolagem)
+
+
+ggplot(uniao_join_filtrado, aes(x=dia_ocorrencia_data,y=peso_maximo_decolagem)) + 
+geom_line(col="red") + 
+geom_hline(yintercept = c(l1,l2))+
+xlab("Data") + 
+ylab("Peso máximo na decolagem") + 
+ggtitle("Peso máximo na decolagem por ano") + 
+#geom_text(aes(label = peso_maximo_decolagem), vjust=-0.2, color="black") +
+scale_fill_brewer(palette="BrBG")
+
+
+ 
+grafico_linhas               
+```
+
+# Criando categorias em classes
+
+```{r}
+minimo=min(uniao_join_filtrado$peso_maximo_decolagem)
+
+q2=quantile(uniao_join_filtrado$peso_maximo_decolagem,0.5)
+
+q3=quantile(uniao_join_filtrado$peso_maximo_decolagem,0.75)
+
+maximo=max(uniao_join_filtrado$peso_maximo_decolagem)
+
+uniao_join_filtrado$peso_classes= 
+  cut(uniao_join_filtrado$peso_maximo_decolagem, breaks = c(minimo,q2,q3,maximo),
+      labels = c("min -|Q2", "Q2-|Q3", "Q3-|max"),
+      include.lowest = F)
+```
+
+
+# Contabilizando as frequências por classe na Pizza
+
+```{r}
+df_pizza_tab=table(uniao_join_filtrado$peso_classes)
+df_pizza <<- data.frame(df_pizza_tab)
+
+grafico_pizza_iterativo = plot_ly(df_pizza, 
+                            labels = ~Var1, 
+                            values = ~Freq, 
+                            type = 'pie') %>%
+                            layout(title = 'Peso máximo decolagem (%) ')
+
+grafico_pizza_iterativo
+```
+
+# Selecionando as ocorrências que ficaram acima de 3 sigma de peso máximo decolagem
+
+```{r}
+uniao_join_filtrado_acima3sigma_peso_decolagem = uniao_join_filtrado %>% filter (peso_maximo_decolagem >l2)
+```
+
+- Observamos que filtramos 28 ocorrências a serem analisadas
+
+# Fazendo o resumo da base reduzida
+
+```{r}
+summary(uniao_join_filtrado_acima3sigma_peso_decolagem)
+```
+
+
+
+
+
+
+
+
+  
+  
+  
+  
+  
+  
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

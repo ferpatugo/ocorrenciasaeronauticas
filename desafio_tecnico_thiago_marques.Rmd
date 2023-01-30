@@ -1,0 +1,168 @@
+---
+title: "Ocorrências Aeronáuticas na Aviação Civil Brasileira - Apresentação - Thiago Marques"
+author: "Thiago Marques"
+date: '2023-01-30'
+output: rmdformats::readthedown
+highlight: kate
+---
+
+```{r, setup, include=FALSE}
+knitr::opts_knit$set(root.dir = "C:\\Users\\teste\\Desktop\\area de trabalho\\A3DATA\\desafio_tecnico")
+```
+
+```{r echo=FALSE, fig.align="center"}
+knitr::include_graphics("C:\\Users\\teste\\Desktop\\area de trabalho\\A3DATA\\desafio_tecnico\\logo.png")
+```  
+
+# Apresentação do desafio
+
+- Identificar padrões nos acidentes e incidentes graves na aviação civil Brasileira por meio dos dados do CENIPA(Centro de investigação e Prevenção de Acidentes Aeronáuticos).
+
+- Horizonte temporal da base de dados em ocorrências: 2006 a 2015
+
+# Explicação do processo utilizado
+
+- Vamos realizar uma análise exploratória de dados passando pela etapa de leitura da base de dados, transformação de variáveis, união de tabelas, limpeza e visualização dos dados a fim de extrair hipóteses que poderão ser refutadas ou não em um estudo mais detalhado e profundo se utilizando de Inferência Estatística
+
+# Hipóteses levantadas
+
+- Há um padrão crescente ou descrescente no aumento do número de ocorrências aeronáuticas e do número de aeronaves envolvidas em acidentes de 2006 a 2015?
+
+- Quais são os tipos de classificação, níveis de dano e equipamento de ocorrências mais comuns?
+
+- Quais são os Status de investigação existentes?
+
+- Em quais estados as ocorrências são mais frequentes?
+
+- Quais são os Problemas mais comuns que levam aos acidentes e incidentes graves?
+
+- O peso máximo da decolagem parece influenciar no acontecimento do acidente?
+
+
+# Análise exploratória - Respondendo as hipóteses elaboradas
+
+## Quais são os tipos de classificação, níveis de dano e equipamento de ocorrências mais comuns?
+
+```{r echo=FALSE, fig.align="center"}
+knitr::include_graphics("C:\\Users\\teste\\Desktop\\area de trabalho\\A3DATA\\desafio_tecnico\\graficos\\plot01.png")
+```  
+- A quantidade de acidentes e incidentes graves aparenta ter uma tendência crescente de 2006 a 2012 e decresce a partir de 2013 a 2015, tendo seu pico em 2012, chegando a 287 acidentes, o que correponde a 14,15 % do total de acidentes no período estudado.
+
+```{r echo=FALSE, fig.align="center"}
+knitr::include_graphics("C:\\Users\\teste\\Desktop\\area de trabalho\\A3DATA\\desafio_tecnico\\graficos\\plot02.png")
+```  
+- Segue o mesmo padrão do número de ocorrências de acidentes, sendo seu pico também em  2012, com 290 casos, correspondendo a 13,94% do total de aeronaves acidentadas no período estudado.
+
+```{r echo=FALSE, fig.align="center"}
+knitr::include_graphics("C:\\Users\\teste\\Desktop\\area de trabalho\\A3DATA\\desafio_tecnico\\graficos\\plot03.png")
+```  
+- A grande maior parte (72,8%) das ocorrências foi considerada acidente e não incidente grave.
+
+```{r echo=FALSE, fig.align="center"}
+knitr::include_graphics("C:\\Users\\teste\\Desktop\\area de trabalho\\A3DATA\\desafio_tecnico\\graficos\\plot04.png")
+```  
+- Os níveis de danos mais comuns foram consideradas, respectivamente:
+
+  - Substancial(60,4%);
+  - Destruída (17,8%);
+  - Leve (13,2%);
+  - Nenhum (8,51%);
+
+```{r echo=FALSE, fig.align="center"}
+knitr::include_graphics("C:\\Users\\teste\\Desktop\\area de trabalho\\A3DATA\\desafio_tecnico\\graficos\\plot05.png")
+```  
+- Os acidentes e incidentes graves mais comuns aconteceram com os respectivos equipamentos aéreos:
+
+  - Avião (79,4%);
+  - Helicóptero (13,1%);
+  - Ultraleve (7,48%);
+
+
+## Quais são os Status de investigação existentes?
+
+```{r echo=FALSE, fig.align="center"}
+knitr::include_graphics("C:\\Users\\teste\\Desktop\\area de trabalho\\A3DATA\\desafio_tecnico\\graficos\\plot06.png")
+```  
+- O Status da investigação das ocorrências foram:
+
+  - Finalizada (58,1%);
+  - Ativa (41,9%);
+  - Reaberta (0,0545%)
+  
+## Em quais estados as ocorrências são mais frequentes?
+
+```{r echo=FALSE, fig.align="center"}
+knitr::include_graphics("C:\\Users\\teste\\Desktop\\area de trabalho\\A3DATA\\desafio_tecnico\\graficos\\plot07.png")
+``` 
+- As top 10 Unidades de Federação em acidentes e incidentes foram respectivamente:
+
+   - SP,RS,MT,PR,MG,GO,RJ,PA,BA,AM (Totalizando 79,24% do total em acidentes e incidentes graves de 2006 a 2015);
+  
+  
+## Quais são os Problemas mais comuns que levam aos acidentes e incidentes graves?
+
+```{r echo=FALSE, fig.align="center"}
+knitr::include_graphics("C:\\Users\\teste\\Desktop\\area de trabalho\\A3DATA\\desafio_tecnico\\graficos\\plot08.png")
+``` 
+- Dentre os tipos de ocorrência por tipo de problema, estão:
+
+  - Falha do motor em vôo;
+  - Perda de controle no solo;
+  - Perda de controle em vôo;
+  - Colisão em vôo com obstáculo;
+  - Com trem de Pouso;
+  
+## O peso máximo da decolagem parece influenciar no acontecimento do acidente?  
+
+```{r echo=FALSE, fig.align="center"}
+knitr::include_graphics("C:\\Users\\teste\\Desktop\\area de trabalho\\A3DATA\\desafio_tecnico\\graficos\\plot09.png")
+``` 
+- Foi plotada a série de pesos máximos na decolagem por ano, junto aos limites 3 sigma e vemos que existem ocorrências em que esse peso é ultrapassado fortemente. Vamos ver essa distribuição ao longo dos quartis no próximo gráfico de pizza.
+
+```{r echo=FALSE, fig.align="center"}
+knitr::include_graphics("C:\\Users\\teste\\Desktop\\area de trabalho\\A3DATA\\desafio_tecnico\\graficos\\plot10.png")
+``` 
+- Foram gerados labels de divisões por quartis para facilitar a visualização dos dados.
+
+```{r echo=FALSE, fig.align="center"}
+knitr::include_graphics("C:\\Users\\teste\\Desktop\\area de trabalho\\A3DATA\\desafio_tecnico\\graficos\\plot11.png")
+``` 
+
+- Pelo box-plot podemos ver que só ficamos com informações acima do terceiro quartil e ainda sim temos observações que podem ser outliers no nosso processo, demandando uma maior atenção para entender o motivo dos mesmos.
+
+```{r echo=FALSE, fig.align="center"}
+knitr::include_graphics("C:\\Users\\teste\\Desktop\\area de trabalho\\A3DATA\\desafio_tecnico\\graficos\\tabela.png")
+``` 
+- Pelo print acima podemos notar que: 
+
+  - Das 28 observações, 17 foram consideradas incidentes graves (60,71%) ; 
+  - foram investigadas 26 das 28 (92,86%) ; 
+  - A maior parte em SP, RJ, DF e duas fora do país (PERU E COLÔMBIA);
+  - Os horários de ocorrência parecem ter um padrão de acontecer pela noite e madrugada;
+  - Investigado por três Comandos investigadores: 
+  
+    - (CENIPA) (22);
+    - SERIPA-4 (4);
+    - SERIPA-3 (1);
+  
+# Conclusões e insights gerados
+
+Dessa forma, foram analisadas informações dos acidentes e incidentes graves na aviação brasileira nos anos de 2006 a 2015 com o objetivo de fomentar discussões e levantar hipóteses a serem refutadas ou não em um estudo inferencial mais aprofundado, posteriormente. Mas já nesse estudo exploratório utilizando a abordagem 3 sigma, foram identificadas 28 ocorrências a serem analisadas com mais atenção, das quais 26 delas demandaram investigação de fato.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
